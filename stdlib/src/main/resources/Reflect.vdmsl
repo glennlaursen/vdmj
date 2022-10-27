@@ -1,0 +1,38 @@
+module Reflect
+exports all
+definitions
+types
+	Name = seq1 of char;
+	
+	BasicType = <NAT> | <CHAR> | <BOOL>;	-- etc
+	
+	AggregateType ::
+		kind	: <SET> | <SEQ> | <PRODUCT> | <UNION>
+		members	: seq1 of Type;
+		
+	NamedType ::
+		name	: Name
+		type	: Type;
+		
+	Field ::
+		name	: Name
+		type	: Type;
+		
+	RecordType ::
+		name	: Name
+		fields	: seq of Field;
+	
+	Type = BasicType | AggregateType | NamedType | RecordType;
+	
+	TypeDefinition ::
+		name	: Name		-- LHS
+		type	: Type;		-- RHS
+		
+	Definition = TypeDefinition;
+	
+functions
+	getDefinition: seq1 of char +> Definition
+	getDefinition(name) ==
+		is not yet specified;
+
+end Reflect
