@@ -158,7 +158,7 @@ public class TCClassList extends TCMappedList<ASTClassDefinition, TCClassDefinit
 		return list.contains(null) ? null : list;	// Usually local func definitions
 	}
 
-	private TCDefinition findDefinition(TCNameToken sought)
+	public TCDefinition findDefinition(TCNameToken sought)
 	{
 		for (TCClassDefinition clazz: this)
 		{
