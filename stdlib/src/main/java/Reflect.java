@@ -35,6 +35,10 @@ import com.fujitsu.vdmj.runtime.Interpreter;
 import com.fujitsu.vdmj.runtime.VDMFunction;
 import com.fujitsu.vdmj.tc.definitions.TCClassList;
 import com.fujitsu.vdmj.tc.definitions.TCDefinition;
+import com.fujitsu.vdmj.tc.definitions.TCExplicitFunctionDefinition;
+import com.fujitsu.vdmj.tc.definitions.TCExplicitOperationDefinition;
+import com.fujitsu.vdmj.tc.definitions.TCImplicitFunctionDefinition;
+import com.fujitsu.vdmj.tc.definitions.TCImplicitOperationDefinition;
 import com.fujitsu.vdmj.tc.definitions.TCTypeDefinition;
 import com.fujitsu.vdmj.tc.lex.TCNameToken;
 import com.fujitsu.vdmj.tc.modules.TCModuleList;
@@ -122,6 +126,20 @@ public class Reflect
 						ValueFactory.mkSeq(def.name.getExplicit(true).toString()),
 						reflectType(def.getType()));				
 			}
+		}
+		else if (def instanceof TCExplicitFunctionDefinition ||
+				 def instanceof TCImplicitFunctionDefinition)
+		{
+			return ValueFactory.mkRecord("Reflect", "FunctionDefinition",
+					ValueFactory.mkSeq(def.name.getExplicit(true).toString()),
+					reflectType(def.getType()));							
+		}
+		else if (def instanceof TCExplicitOperationDefinition ||
+				 def instanceof TCImplicitOperationDefinition)
+		{
+			return ValueFactory.mkRecord("Reflect", "OperationDefinition",
+					ValueFactory.mkSeq(def.name.getExplicit(true).toString()),
+					reflectType(def.getType()));							
 		}
 		
 		throw new Exception("Unsupported definition type");

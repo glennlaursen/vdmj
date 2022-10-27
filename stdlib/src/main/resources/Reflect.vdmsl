@@ -3,14 +3,37 @@ exports all
 definitions
 types
 	Name = seq1 of char;
+
+/**
+ * Types
+ */
+	BasicType = <NAT> | <NAT1> | <INT> | <RAT> | <REAL> | <CHAR> | <BOOL> | <TOKEN>;
 	
-	BasicType = <NAT> | <CHAR> | <BOOL>;	-- etc
+	QuoteType ::
+		kind	: Name;
+		
+	OptionalType ::
+		type	: Type;
 	
-	AggregateType ::
-		kind	: <SET> | <SEQ> | <PRODUCT> | <UNION>
+	SetSeqType ::
+		kind	: <SET> | <SET1> | <SEQ> | <SEQ1>
+		type	: Type;
+		
+	MapType ::
+		inject	: bool
+		domain	: Type
+		range	: Type;
+		
+	ProductType ::
+		members	: seq1 of Type;
+		
+	UnionType ::
 		members	: seq1 of Type;
 		
 	NamedType ::
+		name	: Name;
+		
+	ClassType ::
 		name	: Name;
 		
 	Field ::
@@ -20,14 +43,38 @@ types
 	RecordType ::
 		name	: Name
 		fields	: seq of Field;
+		
+	FunctionType ::
+		params	: seq of Type
+		result	: Type;
 	
-	Type = BasicType | AggregateType | NamedType | RecordType;
+	OperationType ::
+		params	: seq of Type
+		result	: Type;
 	
+	Type = BasicType | QuoteType | OptionalType | SetSeqType | MapType | ProductType | UnionType |
+		   NamedType | RecordType | FunctionType | OperationType;
+
+/**
+ * Definitions
+ */
 	TypeDefinition ::
 		name	: Name		-- LHS
 		type	: Type;		-- RHS
 		
-	Definition = TypeDefinition;
+	FunctionDefinition ::
+		name	: Name
+		type	: FunctionType;
+				
+	OperationDefinition ::
+		name	: Name
+		type	: OperationType;
+				
+	Definition = TypeDefinition | FunctionDefinition | OperationDefinition;
+	
+	Module = seq of Definition;
+	
+	Class = seq of Definition;
 	
 functions
 	getDefinition: seq1 of char +> Definition

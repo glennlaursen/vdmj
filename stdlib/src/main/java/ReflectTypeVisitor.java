@@ -25,16 +25,31 @@
 import com.fujitsu.vdmj.runtime.ValueException;
 import com.fujitsu.vdmj.tc.types.TCBooleanType;
 import com.fujitsu.vdmj.tc.types.TCCharacterType;
+import com.fujitsu.vdmj.tc.types.TCClassType;
 import com.fujitsu.vdmj.tc.types.TCField;
+import com.fujitsu.vdmj.tc.types.TCFunctionType;
+import com.fujitsu.vdmj.tc.types.TCInMapType;
+import com.fujitsu.vdmj.tc.types.TCIntegerType;
+import com.fujitsu.vdmj.tc.types.TCMapType;
 import com.fujitsu.vdmj.tc.types.TCNamedType;
+import com.fujitsu.vdmj.tc.types.TCNaturalOneType;
 import com.fujitsu.vdmj.tc.types.TCNaturalType;
+import com.fujitsu.vdmj.tc.types.TCOperationType;
+import com.fujitsu.vdmj.tc.types.TCOptionalType;
 import com.fujitsu.vdmj.tc.types.TCProductType;
+import com.fujitsu.vdmj.tc.types.TCQuoteType;
+import com.fujitsu.vdmj.tc.types.TCRationalType;
+import com.fujitsu.vdmj.tc.types.TCRealType;
 import com.fujitsu.vdmj.tc.types.TCRecordType;
+import com.fujitsu.vdmj.tc.types.TCSeq1Type;
 import com.fujitsu.vdmj.tc.types.TCSeqType;
+import com.fujitsu.vdmj.tc.types.TCSet1Type;
 import com.fujitsu.vdmj.tc.types.TCSetType;
+import com.fujitsu.vdmj.tc.types.TCTokenType;
 import com.fujitsu.vdmj.tc.types.TCType;
 import com.fujitsu.vdmj.tc.types.TCUnionType;
 import com.fujitsu.vdmj.tc.types.visitors.TCTypeVisitor;
+import com.fujitsu.vdmj.values.BooleanValue;
 import com.fujitsu.vdmj.values.QuoteValue;
 import com.fujitsu.vdmj.values.SeqValue;
 import com.fujitsu.vdmj.values.Value;
@@ -50,6 +65,22 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 		{
 			return new QuoteValue("NAT");
 		}
+		else if (node instanceof TCNaturalOneType)
+		{
+			return new QuoteValue("NAT1");
+		}
+		else if (node instanceof TCIntegerType)
+		{
+			return new QuoteValue("INT");
+		}
+		else if (node instanceof TCRationalType)
+		{
+			return new QuoteValue("RAT");
+		}
+		else if (node instanceof TCRealType)
+		{
+			return new QuoteValue("REAL");
+		}
 		else if (node instanceof TCCharacterType)
 		{
 			return new QuoteValue("CHAR");
@@ -58,30 +89,51 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 		{
 			return new QuoteValue("BOOL");
 		}
+		else if (node instanceof TCTokenType)
+		{
+			return new QuoteValue("TOKEN");
+		}
 		
-		return null;
+		throw new RuntimeException("Unknown basic type");
 	}
 	
 	@Override
-	public Value caseProductType(TCProductType node, Object arg)
+	public Value caseClassType(TCClassType node, Object arg)
 	{
 		try
 		{
-			TCProductType p =(TCProductType)node;
-			ValueList m = new ValueList();
-			
-			for (TCType member: p.types)
-			{
-				m.add(member.apply(this, arg));
-			}
-			
-			return ValueFactory.mkRecord("Reflect", "AggregateType",
-					new QuoteValue("PRODUCT"),
-					new SeqValue(m));
+			return ValueFactory.mkRecord("Reflect", "ClassType",
+					new SeqValue(node.name.getExplicit(true).toString()));
 		}
 		catch (ValueException e)
 		{
-			return null;
+			throw new RuntimeException(e);
+		}
+	}
+	
+	@Override
+	public Value caseQuoteType(TCQuoteType node, Object arg)
+	{
+		try
+		{
+			return ValueFactory.mkRecord("Reflect", "QuoteType", new SeqValue(node.value));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	@Override
+	public Value caseOptionalType(TCOptionalType node, Object arg)
+	{
+		try
+		{
+			return ValueFactory.mkRecord("Reflect", "OptionalType", node.type.apply(this, arg));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -90,11 +142,13 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 	{
 		try
 		{
-			return ValueFactory.mkRecord("Reflect", "Type", new QuoteValue("SET"), new SeqValue());
+			String kind = (node instanceof TCSet1Type) ? "SET1" : "SET";
+			return ValueFactory.mkRecord("Reflect", "SetSeqType",
+					new QuoteValue(kind), node.setof.apply(this, arg));
 		}
 		catch (ValueException e)
 		{
-			return null;
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -103,14 +157,72 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 	{
 		try
 		{
-			return ValueFactory.mkRecord("Reflect", "Type", new QuoteValue("SEQ"), new SeqValue());
+			String kind = (node instanceof TCSeq1Type) ? "SEQ1" : "SEQ";
+			return ValueFactory.mkRecord("Reflect", "SetSeqType",
+					new QuoteValue(kind), node.seqof.apply(this, arg));
 		}
 		catch (ValueException e)
 		{
-			return null;
+			throw new RuntimeException(e);
 		}
 	}
 	
+	@Override
+	public Value caseMapType(TCMapType node, Object arg)
+	{
+		try
+		{
+			return ValueFactory.mkRecord("Reflect", "MapType",
+					new BooleanValue(node instanceof TCInMapType),
+					node.from.apply(this, arg),
+					node.to.apply(this, arg));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public Value caseProductType(TCProductType node, Object arg)
+	{
+		try
+		{
+			ValueList m = new ValueList();
+			
+			for (TCType member: node.types)
+			{
+				m.add(member.apply(this, arg));
+			}
+			
+			return ValueFactory.mkRecord("Reflect", "ProductType", new SeqValue(m));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public Value caseUnionType(TCUnionType node, Object arg)
+	{
+		try
+		{
+			ValueList m = new ValueList();
+			
+			for (TCType member: node.types)
+			{
+				m.add(member.apply(this, arg));
+			}
+			
+			return ValueFactory.mkRecord("Reflect", "UnionType", new SeqValue(m));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
 	@Override
 	public Value caseNamedType(TCNamedType node, Object arg)
 	{
@@ -121,7 +233,49 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 		}
 		catch (ValueException e)
 		{
-			return null;
+			throw new RuntimeException(e);
+		}
+	}
+	
+	@Override
+	public Value caseFunctionType(TCFunctionType node, Object arg)
+	{
+		try
+		{
+			ValueList p = new ValueList();
+			
+			for (TCType param: node.parameters)
+			{
+				p.add(param.apply(this, arg));
+			}
+			
+			return ValueFactory.mkRecord("Reflect", "FunctionType",
+					new SeqValue(p), node.result.apply(this, arg));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+	
+	@Override
+	public Value caseOperationType(TCOperationType node, Object arg)
+	{
+		try
+		{
+			ValueList p = new ValueList();
+			
+			for (TCType param: node.parameters)
+			{
+				p.add(param.apply(this, arg));
+			}
+			
+			return ValueFactory.mkRecord("Reflect", "OperationType",
+					new SeqValue(p), node.result.apply(this, arg));
+		}
+		catch (ValueException e)
+		{
+			throw new RuntimeException(e);
 		}
 	}
 	
@@ -145,30 +299,7 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 		}
 		catch (ValueException e)
 		{
-			return null;
-		}
-	}
-	
-	@Override
-	public Value caseUnionType(TCUnionType node, Object arg)
-	{
-		try
-		{
-			TCUnionType u =(TCUnionType)node;
-			ValueList m = new ValueList();
-			
-			for (TCType member: u.types)
-			{
-				m.add(member.apply(this, arg));
-			}
-			
-			return ValueFactory.mkRecord("Reflect", "AggregateType",
-					new QuoteValue("UNION"),
-					new SeqValue(m));
-		}
-		catch (ValueException e)
-		{
-			return null;
+			throw new RuntimeException(e);
 		}
 	}
 }
