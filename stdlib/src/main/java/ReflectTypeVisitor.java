@@ -117,8 +117,7 @@ public class ReflectTypeVisitor extends TCTypeVisitor<Value, Object>
 		try
 		{
 			return ValueFactory.mkRecord("Reflect", "NamedType",
-					ValueFactory.mkSeq(node.typename.getExplicit(true).toString()),
-					node.type.apply(this, arg));
+					ValueFactory.mkSeq(node.typename.getExplicit(true).toString()));
 		}
 		catch (ValueException e)
 		{

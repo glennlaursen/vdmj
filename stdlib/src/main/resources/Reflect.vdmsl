@@ -11,8 +11,7 @@ types
 		members	: seq1 of Type;
 		
 	NamedType ::
-		name	: Name
-		type	: Type;
+		name	: Name;
 		
 	Field ::
 		name	: Name

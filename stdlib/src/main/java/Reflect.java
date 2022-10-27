@@ -38,6 +38,7 @@ import com.fujitsu.vdmj.tc.definitions.TCDefinition;
 import com.fujitsu.vdmj.tc.definitions.TCTypeDefinition;
 import com.fujitsu.vdmj.tc.lex.TCNameToken;
 import com.fujitsu.vdmj.tc.modules.TCModuleList;
+import com.fujitsu.vdmj.tc.types.TCNamedType;
 import com.fujitsu.vdmj.tc.types.TCType;
 import com.fujitsu.vdmj.values.SeqValue;
 import com.fujitsu.vdmj.values.Value;
@@ -107,9 +108,20 @@ public class Reflect
 	{
 		if (def instanceof TCTypeDefinition)
 		{
-			return ValueFactory.mkRecord("Reflect", "TypeDefinition",
-				ValueFactory.mkSeq(def.name.getExplicit(true).toString()),
-				reflectType(def.getType()));
+			if (def.getType() instanceof TCNamedType)
+			{
+				TCNamedType nt = (TCNamedType) def.getType();
+				
+				return ValueFactory.mkRecord("Reflect", "TypeDefinition",
+					ValueFactory.mkSeq(def.name.getExplicit(true).toString()),
+					reflectType(nt.type));
+			}
+			else
+			{
+				return ValueFactory.mkRecord("Reflect", "TypeDefinition",
+						ValueFactory.mkSeq(def.name.getExplicit(true).toString()),
+						reflectType(def.getType()));				
+			}
 		}
 		
 		throw new Exception("Unsupported definition type");
