@@ -114,7 +114,7 @@ public class BacktrackInputReader
 	 * Create an ExternalFormatReader from a File, depending on the filename.
 	 * @throws IOException 
 	 */
-	private ExternalFormatReader readerFactory(File file) throws IOException
+	public static ExternalFormatReader readerFactory(File file) throws IOException
 	{
 		String lowerName = file.getName().toLowerCase();		// NB! lower case matched
 		
@@ -151,6 +151,8 @@ public class BacktrackInputReader
 		externalReaders = new HashMap<String, Class<? extends ExternalFormatReader>>();
 		
 		// Add the standard readers first
+		externalReaders.put(".tex", LatexStreamReader.class);	// To allow *.tex files
+		externalReaders.put(".latex", LatexStreamReader.class);	// To allow *.latex files
 		externalReaders.put(".doc", DocStreamReader.class);
 		externalReaders.put(".docx", DocxStreamReader.class);
 		externalReaders.put(".odt", ODFStreamReader.class);

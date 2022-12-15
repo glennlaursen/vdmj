@@ -45,6 +45,7 @@ import com.fujitsu.vdmj.Settings;
 import com.fujitsu.vdmj.VDMJ;
 import com.fujitsu.vdmj.config.Properties;
 import com.fujitsu.vdmj.debug.ConsoleDebugReader;
+import com.fujitsu.vdmj.debug.ConsoleKeyWatcher;
 import com.fujitsu.vdmj.lex.Dialect;
 import com.fujitsu.vdmj.lex.LexLocation;
 import com.fujitsu.vdmj.messages.Console;
@@ -453,14 +454,21 @@ abstract public class CommandReader
 	{
 		line = line.substring(line.indexOf(' ') + 1);
 		ConsoleDebugReader dbg = null;
+		ConsoleKeyWatcher watch = null;
 		
 		try
 		{
 			dbg = new ConsoleDebugReader();
 			dbg.start();
+			watch = new ConsoleKeyWatcher(line);
+			watch.start();
 			
    			long before = System.currentTimeMillis();
-   			println("= " + interpreter.execute(line));
+   			
+   			Value v = interpreter.execute(line);
+   			// ValuePrinter.print(v);
+   			
+   			println("= " + v);
    			long after = System.currentTimeMillis();
 			println("Executed in " + (double)(after-before)/1000 + " secs. ");
 
@@ -500,6 +508,11 @@ abstract public class CommandReader
 			if (dbg != null)
 			{
 				dbg.interrupt();	// Stop the debugger reader.
+			}
+			
+			if (watch != null)
+			{
+				watch.interrupt();	// Stop ESC key watcher.
 			}
 		}
 
@@ -614,14 +627,14 @@ abstract public class CommandReader
 			}
 			
 			ConsoleDebugReader dbg = null;
+			ConsoleKeyWatcher watcher = null;
 			
 			try
 			{
-				if (debug)
-				{
-					dbg = new ConsoleDebugReader();
-					dbg.start();
-				}
+				dbg = new ConsoleDebugReader();
+				dbg.start();
+				watcher = new ConsoleKeyWatcher("runtrace");
+				watcher.start();
 
 				boolean passed = interpreter.runtrace(line, startTest, endTest, debug, reduction, reductionType, traceseed);
     			
@@ -642,9 +655,14 @@ abstract public class CommandReader
 			}
 			finally
 			{
-				if (debug)
+				if (dbg != null)
 				{
 					dbg.interrupt();
+				}
+				
+				if (watcher != null)
+				{
+					watcher.interrupt();
 				}
 			}
 
@@ -941,11 +959,15 @@ abstract public class CommandReader
 		LexLocation.clearLocations();
 		println("Cleared all coverage information");
 		ConsoleDebugReader dbg = null;
+		ConsoleKeyWatcher watcher = null;
 
 		try
 		{
 			dbg = new ConsoleDebugReader();
 			dbg.start();
+			watcher = new ConsoleKeyWatcher("init");
+			watcher.start();
+			
 			interpreter.init();
 		}
 		catch (Exception e)
@@ -957,6 +979,11 @@ abstract public class CommandReader
 			if (dbg != null)
 			{
 				dbg.interrupt();
+			}
+			
+			if (watcher != null)
+			{
+				watcher.interrupt();
 			}
 		}
 		
