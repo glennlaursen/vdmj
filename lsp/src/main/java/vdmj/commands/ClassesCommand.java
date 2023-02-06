@@ -28,7 +28,6 @@ import com.fujitsu.vdmj.Settings;
 import com.fujitsu.vdmj.in.definitions.INClassDefinition;
 import com.fujitsu.vdmj.lex.Dialect;
 import com.fujitsu.vdmj.runtime.ClassInterpreter;
-import com.fujitsu.vdmj.runtime.Interpreter;
 
 import dap.DAPMessageList;
 import dap.DAPRequest;
@@ -59,7 +58,7 @@ public class ClassesCommand extends Command
 						false, "Command not available for VDM-SL", null);			
 			}
 			
-			ClassInterpreter  m = (ClassInterpreter) Interpreter.getInstance();
+			ClassInterpreter  m = ClassInterpreter.getInstance();
 			String defname = m.getDefaultName();
 			StringBuilder sb = new StringBuilder();
 			
