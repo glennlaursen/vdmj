@@ -27,8 +27,6 @@ package com.fujitsu.vdmj;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.JarURLConnection;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -36,21 +34,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Vector;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 import com.fujitsu.vdmj.config.Properties;
 import com.fujitsu.vdmj.lex.BacktrackInputReader;
 import com.fujitsu.vdmj.lex.Dialect;
-import com.fujitsu.vdmj.mapper.ClassMapper;
 import com.fujitsu.vdmj.messages.Console;
 import com.fujitsu.vdmj.runtime.Interpreter;
 import com.fujitsu.vdmj.util.GetResource;
+import com.fujitsu.vdmj.util.Utils;
 
 /**
  * The main class of the VDMJ parser/checker/interpreter.
+ * 
+ * @deprecated use {@link com.fujitsu.vdmj.plugins.VDMJ} instead.
+ * This class will be removed in VDMJ version 5.
  */
+@Deprecated
 abstract public class VDMJ
 {
 	protected static boolean warnings = true;
@@ -59,8 +58,6 @@ abstract public class VDMJ
 	protected static boolean quiet = false;
 	protected static String script = null;
 	protected static String logfile = null;
-
-	public static Charset filecharset = Charset.defaultCharset();
 
 	/**
 	 * The main method. This validates the arguments, then parses and type
@@ -83,7 +80,6 @@ abstract public class VDMJ
 		String defaultName = null;
 
 		Properties.init();		// Read properties file, if any
-		Settings.usingCmdLine = true;
 
 		for (Iterator<String> i = largs.iterator(); i.hasNext();)
 		{
@@ -106,7 +102,7 @@ abstract public class VDMJ
     		}
     		else if (arg.equals("-v"))		// Exit if this option is used.
     		{
-    			String version = getVersion();
+    			String version = Utils.getVersion();
 
     			if (version == null)
     			{
@@ -161,7 +157,7 @@ abstract public class VDMJ
     		{
     			if (i.hasNext())
     			{
-    				filecharset = validateCharset(i.next());
+    				Settings.filecharset = validateCharset(i.next());
     			}
     			else
     			{
@@ -506,24 +502,6 @@ abstract public class VDMJ
 		return null;
 	}
 
-	private static String getVersion()
-	{
-		try
-		{
-			String path = VDMJ.class.getName().replaceAll("\\.", "/");
-			URL url = VDMJ.class.getResource("/" + path + ".class");
-			JarURLConnection conn = (JarURLConnection)url.openConnection();
-		    JarFile jar = conn.getJarFile();
-			Manifest mf = jar.getManifest();
-			String version = (String)mf.getMainAttributes().get(Attributes.Name.IMPLEMENTATION_VERSION);
-			return version;
-		}
-		catch (Exception e)
-		{
-			return null;
-		}
-	}
-
 	private static void usage(String msg)
 	{
 		System.err.println("VDMJ: " + msg + "\n");
@@ -670,11 +648,6 @@ abstract public class VDMJ
 		return Charset.forName(cs);
 	}
 
-	public void setCharset(Charset charset)
-	{
-		VDMJ.filecharset = charset;
-	}
-
 	public void setWarnings(boolean warnings)
 	{
 		VDMJ.warnings = warnings;
@@ -683,39 +656,5 @@ abstract public class VDMJ
 	public void setQuiet(boolean quiet)
 	{
 		VDMJ.quiet = quiet;
-	}
-	
-	public static long mapperStats(long start, String mappings)
-	{
-		if (Settings.verbose)
-		{
-    		long now = System.currentTimeMillis();
-    		ClassMapper mapper = ClassMapper.getInstance(mappings);
-    		long count = mapper.getNodeCount();
-    		long load = mapper.getLoadTime();
-    		
-    		if (load != 0)
-    		{
-    			infoln("Loaded " + mappings + " in " + (double)load/1000 + " secs");
-    		}
-    		
-    		double time = (double)(now-start-load)/1000;
-    		
-    		if (time < 0.01)
-    		{
-    			infoln("Mapped " + count + " nodes with " + mappings + " in " + time + " secs");
-    		}
-    		else
-    		{
-    			int rate = (int) (count/time);
-    			infoln("Mapped " + count + " nodes with " + mappings + " in " + time + " secs (" + rate + "/sec)");
-    		}
-    		
-    		return System.currentTimeMillis();		// ie. remove load times
-		}
-		else
-		{
-			return start;
-		}
 	}
 }
