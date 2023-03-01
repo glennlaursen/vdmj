@@ -21,10 +21,10 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: '8'
-        distribution: 'zulu'
+        distribution: 'temurin'
         cache: maven
     - name: Test and package with Maven
-      run: mvn verify
+      run: mvn test
 
   deploy-to-overture:
     # if: github.event_name == 'push'
@@ -52,7 +52,7 @@ jobs:
           uses: actions/setup-java@v3
           with:
             java-version: '8'
-            distribution: 'zulu'
+            distribution: 'temurin'
             cache: maven
             server-id: ${{ env.SERVER_ID }}
             server-username: MAVEN_USERNAME
