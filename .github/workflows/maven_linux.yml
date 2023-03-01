@@ -93,6 +93,6 @@ jobs:
 
       - name: Publish artifacts to GitHub Packages
         if: contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT' )
-        run: mvn --batch-mode deploy -DskipTests -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/glennlaursen/vdmj
+        run: mvn --batch-mode deploy -DskipTests -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
