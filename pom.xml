@@ -311,7 +311,7 @@
 				<repository>
 					<id>github</id>
 					<name>GitHub Packages</name>
-					<url>https://maven.pkg.github.com/nickbattle/vdmj</url>
+					<url default-value="https://maven.pkg.github.com/nickbattle/vdmj">${env.GITHUB_PACKAGES_REPO_URL}</url>
 				</repository>
 			</distributionManagement>
 		</profile>
