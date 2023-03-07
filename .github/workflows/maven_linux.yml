@@ -93,7 +93,7 @@ jobs:
 
       - name: Publish artifacts to GitHub Packages
         if: contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT' )
-        run: mvn --batch-mode deploy -DskipTests -Pgithub
+        run: mvn --batch-mode deploy -Pgithub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PACKAGES_REPO_URL: https://maven.pkg.github.com/${{ github.repository }}
