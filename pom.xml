@@ -304,6 +304,17 @@
                 </snapshotRepository>
             </distributionManagement>
         </profile>
+    
+        <profile>
+            <id>github</id>
+			<distributionManagement>
+				<repository>
+					<id>github</id>
+					<name>GitHub Packages</name>
+					<url default-value="https://maven.pkg.github.com/nickbattle/vdmj">${env.GITHUB_PACKAGES_REPO_URL}</url>
+				</repository>
+			</distributionManagement>
+		</profile>
 
     </profiles>
 

@@ -56,6 +56,7 @@ import com.fujitsu.vdmj.lex.LexTokenReader;
 import com.fujitsu.vdmj.lex.Token;
 import com.fujitsu.vdmj.mapper.ClassMapper;
 import com.fujitsu.vdmj.messages.InternalException;
+import com.fujitsu.vdmj.messages.VDMError;
 import com.fujitsu.vdmj.pog.ProofObligation;
 import com.fujitsu.vdmj.pog.ProofObligationList;
 import com.fujitsu.vdmj.runtime.Context;
@@ -73,9 +74,11 @@ import com.fujitsu.vdmj.tc.patterns.TCMultipleBind;
 import com.fujitsu.vdmj.tc.patterns.TCMultipleBindList;
 import com.fujitsu.vdmj.tc.types.TCSetType;
 import com.fujitsu.vdmj.tc.types.TCType;
+import com.fujitsu.vdmj.tc.types.TCTypeSet;
 import com.fujitsu.vdmj.typechecker.Environment;
 import com.fujitsu.vdmj.typechecker.NameScope;
 import com.fujitsu.vdmj.typechecker.TypeCheckException;
+import com.fujitsu.vdmj.typechecker.TypeChecker;
 import com.fujitsu.vdmj.typechecker.TypeComparator;
 import com.fujitsu.vdmj.values.BooleanValue;
 import com.fujitsu.vdmj.values.SetValue;
@@ -136,7 +139,7 @@ public class QuickCheck
 		reader.nextToken();
 	}
 	
-	public Map<String, ValueList> readRanges(String filename)
+	public Map<String, ValueList> readRangeFile(String filename)
 	{
 		try
 		{
@@ -162,9 +165,11 @@ public class QuickCheck
 				checkFor(ltr, Token.SEMICOLON, "Expecting semi-colon after previous <set expression>");
 			}
 			
+			ltr.close();
 			TCMultipleBindList tcbinds = ClassMapper.getInstance(TCNode.MAPPINGS).convert(astbinds);
 			TCExpressionList tcexps = ClassMapper.getInstance(TCNode.MAPPINGS).convert(astexps);
 			Environment env = interpreter.getGlobalEnvironment();
+			TypeChecker.clearErrors();
 			
 			for (int i=0; i<tcbinds.size(); i++)
 			{
@@ -175,11 +180,19 @@ public class QuickCheck
 				TCExpression exp = tcexps.get(i);
 				TCType exptype = exp.typeCheck(env, null, NameScope.NAMESANDSTATE, null);
 				
-				if (!TypeComparator.compatible(mbset, exptype))
+				if (TypeChecker.getErrorCount() > 0)
 				{
-					errorln("Range bind and expression do not match at " + exp.location);
-					errorln("Bind type: " + mbtype);
-					errorln("Expression type: " + exptype + ", expecting " + mbset);
+					for (VDMError error: TypeChecker.getErrors())
+					{
+						println(error.toString());
+						errorCount++;
+					}
+				}
+				else if (!TypeComparator.compatible(mbset, exptype))
+				{
+					println("Range bind and expression do not match at " + exp.location);
+					println("Bind type: " + mbtype);
+					println("Expression type: " + exptype + ", expecting " + mbset);
 					errorCount++;
 				}
 			}
@@ -194,11 +207,13 @@ public class QuickCheck
 			RootContext ctxt = interpreter.getInitialContext();
 			Map<String, ValueList> ranges = new HashMap<String, ValueList>();
 			long before = System.currentTimeMillis();
+			println("Expanding " + inbinds.size() + " ranges:");
 			
 			for (int i=0; i<inbinds.size(); i++)
 			{
 				ctxt.threadState.init();
 				String key = inbinds.get(i).toString();
+				printf(".");
 				INExpression exp = inexps.get(i);
 				Value value = exp.eval(ctxt);
 				
@@ -211,7 +226,7 @@ public class QuickCheck
 				}
 				else
 				{
-					errorln("Range does not evaluate to a set " + exp.location);
+					println("\nRange does not evaluate to a set " + exp.location);
 					errorCount++;
 				}
 			}
@@ -222,21 +237,21 @@ public class QuickCheck
 			}
 			
 			long after = System.currentTimeMillis();
-			println("Ranges expanded " + duration(before, after));
+			println("\nRanges expanded " + duration(before, after));
 
 			return ranges;
 		}
 		catch (LexException e)
 		{
-			errorln(e.toString());
+			println(e.toString());
 		}
 		catch (ParserException e)
 		{
-			errorln(e.toString());
+			println(e.toString());
 		}
 		catch (TypeCheckException e)
 		{
-			errorln("Error: " + e.getMessage() + " " + e.location);
+			println("Error: " + e.getMessage() + " " + e.location);
 		}
 		catch (InternalException e)
 		{
@@ -274,7 +289,7 @@ public class QuickCheck
 		return inexp.apply(new TypeBindFinder(), null);
 	}
 	
-	public void createRanges(String filename, ProofObligationList chosen)
+	public void createRangeFile(String filename, ProofObligationList chosen)
 	{
 		try
 		{
@@ -282,7 +297,6 @@ public class QuickCheck
 			File file = new File(filename);
 			PrintWriter writer = new PrintWriter(new FileWriter(file));
 			Set<String> done = new HashSet<String>();
-			DefaultRangeCreator rangeCreator = new DefaultRangeCreator();
 			RootContext ctxt = Interpreter.getInstance().getInitialContext();
 
 			for (ProofObligation po: chosen)
@@ -291,12 +305,13 @@ public class QuickCheck
 				{
 					if (!done.contains(mbind.toString()))
 					{
+						DefaultRangeCreator rangeCreator = new DefaultRangeCreator();	// stateful
 						TCType type = mbind.getType();
 						String range = null;
 						
 						if (type.isInfinite())
 						{
-							range = type.apply(rangeCreator, null);
+							range = type.apply(rangeCreator, new TCTypeSet());
 						}
 						else
 						{
@@ -306,7 +321,7 @@ public class QuickCheck
 								
 								if (size > FINITE_LIMIT)	// Avoid huge finite types
 								{
-									range = type.apply(rangeCreator, null);
+									range = type.apply(rangeCreator, new TCTypeSet());
 								}
 								else
 								{
@@ -315,7 +330,7 @@ public class QuickCheck
 							}
 							catch (Exception e)		// Probably ArithmeticException
 							{
-								range = type.apply(rangeCreator, null);
+								range = type.apply(rangeCreator, new TCTypeSet());
 							}
 						}
 						
@@ -444,7 +459,7 @@ public class QuickCheck
 		}
 	}
 
-	private Object duration(long before, long after)
+	private String duration(long before, long after)
 	{
 		double duration = (double)(after - before)/1000;
 		return "in " + duration + "s";

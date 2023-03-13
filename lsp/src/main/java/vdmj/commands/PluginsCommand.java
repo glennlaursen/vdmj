@@ -22,19 +22,20 @@
  *
  ******************************************************************************/
 
-package com.fujitsu.vdmj.plugins.commands;
-
-import static com.fujitsu.vdmj.plugins.PluginConsole.printf;
-import static com.fujitsu.vdmj.plugins.PluginConsole.println;
+package vdmj.commands;
 
 import java.util.Map.Entry;
 
-import com.fujitsu.vdmj.plugins.AnalysisCommand;
-import com.fujitsu.vdmj.plugins.AnalysisPlugin;
+import dap.DAPMessageList;
+import dap.DAPRequest;
+import json.JSONObject;
+import workspace.PluginRegistry;
+import workspace.plugins.AnalysisPlugin;
 
 public class PluginsCommand extends AnalysisCommand
 {
 	private final static String USAGE = "Usage: plugins";
+	public static final String HELP = "plugins - list the loaded plugins";
 
 	public PluginsCommand(String line)
 	{
@@ -47,23 +48,29 @@ public class PluginsCommand extends AnalysisCommand
 	}
 
 	@Override
-	public String run(String line)
+	public DAPMessageList run(DAPRequest request)
 	{
 		if (argv.length != 1)
 		{
-			return USAGE;
+			return new DAPMessageList(request, false, USAGE, null);			
 		}
 		
-		for (Entry<String, AnalysisPlugin> name: registry.getPlugins().entrySet())
+		StringBuilder sb = new StringBuilder();
+		
+		for (Entry<String, AnalysisPlugin> plugin: PluginRegistry.getInstance().getPlugins().entrySet())
 		{
-			printf("%s = %s\n", name.getKey(), name.getValue().getDescription());
+			sb.append(plugin.getKey());
+			sb.append(": ");
+			sb.append(plugin.getValue().getDescription());
+			sb.append("\n");
 		}
 		
-		return null;
+		return new DAPMessageList(request, new JSONObject("result", sb.toString()));
 	}
-	
-	public static void help()
+
+	@Override
+	public boolean notWhenRunning()
 	{
-		println("plugins - list the loaded plugins");
+		return false;
 	}
 }
