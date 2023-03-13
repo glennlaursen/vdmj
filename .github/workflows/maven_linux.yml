@@ -116,13 +116,12 @@ jobs:
 
       - name: Get configId if master
         id: get_config_id
-        if: ${{ github.ref_name }} == 'master'
-        run: echo "config=vdmj" >> $GITHUB_OUTPUT
-
-      - name: Get configId if highprecision
-        id: get_config_id
-        if: ${{ github.ref_name }} == 'highprecision'
-        run: echo "config=vdmj_hp" >> $GITHUB_OUTPUT
+        run: |
+          if [ ${{ github.ref }} == 'refs/heads/master' ]; then
+            echo "configId=vdmj" >> $GITHUB_OUTPUT
+          else
+            echo "configId=vdmj_hp" >> $GITHUB_OUTPUT
+          fi
 
       - name: Send repository dispatch http request to VDM-VSCode
         run: |
@@ -133,7 +132,7 @@ jobs:
           -d '{
                 "event_type": "new-jar",
                 "client_payload": {
-                  "configId": "${{ steps.get_config_id.outputs.config }}",
+                  "configId": "${{ steps.get_config_id.outputs.configId }}",
                   "version": "${{ steps.get_artifact_info.outputs.version }}"
                 }
               }'
