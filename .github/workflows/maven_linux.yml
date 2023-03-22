@@ -84,6 +84,7 @@ jobs:
         run: echo "version=$(mvn -q -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 8
+        if: contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT' )
         uses: actions/setup-java@v3
         with:
           java-version: '8'
@@ -92,6 +93,7 @@ jobs:
           cache: maven
 
       - name: Publish artifacts to GitHub Packages
+        if: contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT' )
         run: mvn --batch-mode deploy -Pgithub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
