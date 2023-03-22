@@ -68,8 +68,6 @@ jobs:
   deploy-to-github:
     needs: build
     runs-on: ubuntu-latest
-    
-    if: github.event_name == 'push' && contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT')
 
     permissions:
       contents: read
