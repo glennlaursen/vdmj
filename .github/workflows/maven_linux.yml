@@ -66,9 +66,10 @@ jobs:
             MAVEN_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
 
   deploy-to-github:
-    if: ${{ github.event_name == 'push' && contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT' ) }}
     needs: build
     runs-on: ubuntu-latest
+    
+    if: ${{ github.event_name }} == 'push' && ${{ contains(${{ steps.get_version.outputs.version }}, 'SNAPSHOT') }}
 
     permissions:
       contents: read
