@@ -35,9 +35,9 @@
         <module>packaging</module>
     </modules>
 
-       <dependencyManagement>
-           <dependencies>
-               <dependency>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
                 <version>4.13.1</version>
@@ -54,7 +54,7 @@
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
-       </dependencyManagement>
+    </dependencyManagement>
 
     <build>
         <pluginManagement>
@@ -195,9 +195,9 @@
                     </execution>
                 </executions>
             </plugin>
-		</plugins>
+        </plugins>
     </build>
-    
+
 
     <scm>
         <url>https://github.com/nickbattle/vdmj
@@ -281,7 +281,7 @@
                 </plugins>
             </build>
         </profile>
-    
+
         <profile>
             <id>au</id>
             <activation>
@@ -304,17 +304,18 @@
                 </snapshotRepository>
             </distributionManagement>
         </profile>
-    
+
         <profile>
             <id>github</id>
-			<distributionManagement>
-				<repository>
-					<id>github</id>
-					<name>GitHub Packages</name>
-					<url default-value="https://maven.pkg.github.com/nickbattle/vdmj">${env.GITHUB_PACKAGES_REPO_URL}</url>
-				</repository>
-			</distributionManagement>
-		</profile>
+            <distributionManagement>
+                <repository>
+                    <id>github</id>
+                    <name>GitHub Packages</name>
+                    <url default-value="https://maven.pkg.github.com/nickbattle/vdmj">${env.GITHUB_PACKAGES_REPO_URL}
+                    </url>
+                </repository>
+            </distributionManagement>
+        </profile>
 
     </profiles>
 
